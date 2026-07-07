@@ -76,6 +76,12 @@ const FormUrlEncodedParams = ({ item, collection }) => {
           placeholder={!value ? 'Value' : ''}
         />
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      width: '25%'
     }
   ];
 

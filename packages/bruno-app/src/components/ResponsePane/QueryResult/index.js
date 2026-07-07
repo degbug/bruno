@@ -44,11 +44,9 @@ const formatErrorMessage = (error) => {
 // Custom hook to determine the initial format and tab based on the data buffer and headers
 export const useInitialResponseFormat = (dataBuffer, headers) => {
   return useMemo(() => {
-    const detectedContentType = detectContentTypeFromBase64(dataBuffer);
     const contentType = getContentType(headers);
 
-    // Wait until both content types are available
-    if (detectedContentType === null || contentType === undefined) {
+    if (!dataBuffer || !contentType) {
       return { initialFormat: null, initialTab: null, contentType: contentType };
     }
 

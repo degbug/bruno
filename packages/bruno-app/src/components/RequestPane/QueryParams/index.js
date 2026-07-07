@@ -100,6 +100,12 @@ const QueryParams = ({ item, collection }) => {
           placeholder={!value ? 'Value' : ''}
         />
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      width: '25%'
     }
   ];
 
@@ -126,6 +132,13 @@ const QueryParams = ({ item, collection }) => {
           item={item}
         />
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      readOnly: true,
+      width: '25%'
     }
   ];
 

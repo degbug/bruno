@@ -113,6 +113,12 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
           placeholder={!value ? 'Value' : ''}
         />
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      width: '25%'
     }
   ];
 

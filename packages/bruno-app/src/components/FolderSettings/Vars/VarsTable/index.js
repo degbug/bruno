@@ -53,7 +53,7 @@ const VarsTable = ({ folder, collection, vars, varType, initialScroll = 0 }) => 
       name: 'Name',
       isKeyField: true,
       placeholder: 'Name',
-      width: '40%'
+      width: '30%'
     },
     {
       key: 'value',
@@ -91,12 +91,19 @@ const VarsTable = ({ folder, collection, vars, varType, initialScroll = 0 }) => 
           )}
         </div>
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      width: '25%'
     }
   ];
 
   const defaultRow = {
     name: '',
     value: '',
+    description: '',
     ...(varType === 'response' ? { local: false } : {})
   };
 

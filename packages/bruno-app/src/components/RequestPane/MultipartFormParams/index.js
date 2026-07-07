@@ -217,7 +217,7 @@ const MultipartFormParams = ({ item, collection }) => {
       key: 'contentType',
       name: 'Content-Type',
       placeholder: 'Auto',
-      width: '20%',
+      width: '15%',
       render: ({ value, onChange }) => (
         <SingleLineEditor
           onSave={onSave}
@@ -229,12 +229,19 @@ const MultipartFormParams = ({ item, collection }) => {
           collection={collection}
         />
       )
+    },
+    {
+      key: 'description',
+      name: 'Description',
+      placeholder: 'Description',
+      width: '25%'
     }
   ];
 
   const defaultRow = {
     name: '',
     value: '',
+    description: '',
     contentType: '',
     type: 'text'
   };
