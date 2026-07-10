@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { addTab, makeTabPermanent } from 'providers/ReduxStore/slices/tabs';
+import { addTab } from 'providers/ReduxStore/slices/tabs';
 import {
   updateResponseExample,
   cloneResponseExample
@@ -51,7 +51,7 @@ const ExampleItem = ({ example, item, collection }) => {
   };
 
   const handleDoubleClick = () => {
-    dispatch(makeTabPermanent({ uid: example.uid }));
+    handleRename();
   };
 
   const handleRename = () => {

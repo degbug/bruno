@@ -22,7 +22,7 @@ import {
   IconAppWindow
 } from '@tabler/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { addTab, focusTab, makeTabPermanent } from 'providers/ReduxStore/slices/tabs';
+import { addTab, focusTab } from 'providers/ReduxStore/slices/tabs';
 import { handleCollectionItemDrop, sendRequest, showInFolder, pasteItem, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import { toggleCollectionItem, addResponseExample } from 'providers/ReduxStore/slices/collections';
 import { insertTaskIntoQueue } from 'providers/ReduxStore/slices/app';
@@ -497,7 +497,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   }
 
   const handleDoubleClick = (event) => {
-    dispatch(makeTabPermanent({ uid: tabUidForItem || item.uid }));
+    setRenameItemModalOpen(true);
   };
 
   // Sort items by their "seq" property.
