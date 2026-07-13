@@ -91,7 +91,7 @@ const WSMessageItem = memo(({ message, isOpen, onToggle }) => {
 
   const handleToggle = () => {
     if (!canOpenMessage) return;
-    onToggle?.(message.timestamp);
+    onToggle?.(message.seq ?? message.timestamp);
   };
 
   return (
@@ -137,7 +137,7 @@ const WSMessageItem = memo(({ message, isOpen, onToggle }) => {
       </div>
       {isOpen && (
         <>
-          <div className="mt-2 flex justify-end gap-2 text-xs ws-message-toolbar" role="tablist">
+          <div className="pt-2 flex justify-end gap-2 text-xs ws-message-toolbar" role="tablist">
             <div
               className={classnames('select-none capitalize', {
                 'active': showHex,
@@ -159,8 +159,9 @@ const WSMessageItem = memo(({ message, isOpen, onToggle }) => {
               {dataType.toLowerCase()}
             </div>
           </div>
-          <div className="mt-1 h-[300px] w-full">
+          <div className="pt-1 h-[300px] w-full">
             <CodeEditor
+              docKey={`sse-msg-${message.seq}`}
               mode={showHex ? 'text/plain' : parsedContent.type}
               theme={displayedTheme}
               enableLineWrapping={showHex ? false : true}
@@ -175,23 +176,53 @@ const WSMessageItem = memo(({ message, isOpen, onToggle }) => {
 });
 
 const WSMessagesList = ({ messages = [] }) => {
-  const virtuosoRef = useRef(null);
+  const safeMessages = Array.isArray(messages) ? messages : [];
   const [scrollerElement, setScrollerElement] = useState(null);
   const [openMessages, setOpenMessages] = useState(new Set());
   const userScrolledAwayRef = useRef(false);
 
-  // Toggle message open/closed state by timestamp
-  const handleMessageToggle = useCallback((timestamp) => {
+  const handleMessageToggle = useCallback((id) => {
+    const savedScrollTop = scrollerElement?.scrollTop ?? 0;
+
+    // Lock scrollTop synchronously during capture-phase scroll events
+    // to prevent any frame where Virtuoso's adjustment is visible.
+    const lockScroll = () => {
+      if (scrollerElement && scrollerElement.scrollTop !== savedScrollTop) {
+        scrollerElement.scrollTop = savedScrollTop;
+      }
+    };
+
     setOpenMessages((prev) => {
       const next = new Set(prev);
-      if (next.has(timestamp)) {
-        next.delete(timestamp);
+      if (next.has(id)) {
+        next.delete(id);
       } else {
-        next.add(timestamp);
+        next.add(id);
       }
       return next;
     });
-  }, []);
+
+    if (scrollerElement) {
+      scrollerElement.addEventListener('scroll', lockScroll, { capture: true, passive: true });
+    }
+
+    // rAF fallback for remaining async adjustments, then cleanup
+    let restoresRemaining = 12;
+    const restore = () => {
+      if (restoresRemaining <= 0) {
+        if (scrollerElement) {
+          scrollerElement.removeEventListener('scroll', lockScroll, { capture: true });
+        }
+        return;
+      }
+      restoresRemaining--;
+      if (scrollerElement && scrollerElement.scrollTop !== savedScrollTop) {
+        scrollerElement.scrollTop = savedScrollTop;
+      }
+      requestAnimationFrame(restore);
+    };
+    requestAnimationFrame(restore);
+  }, [scrollerElement]);
 
   useEffect(() => {
     if (!scrollerElement) return;
@@ -229,7 +260,8 @@ const WSMessagesList = ({ messages = [] }) => {
   }, [openMessages.size]);
 
   const renderItem = useCallback((_, msg) => {
-    const isOpen = openMessages.has(msg.timestamp);
+    const msgId = msg.seq ?? msg.timestamp;
+    const isOpen = openMessages.has(msgId);
     return <WSMessageItem message={msg} isOpen={isOpen} onToggle={handleMessageToggle} />;
   }, [openMessages, handleMessageToggle]);
 
@@ -237,21 +269,22 @@ const WSMessagesList = ({ messages = [] }) => {
     return msg.seq ?? msg.timestamp;
   }, []);
 
-  if (!messages.length) {
+  if (!safeMessages.length) {
     return <StyledWrapper><div className="empty-state">No messages yet.</div></StyledWrapper>;
   }
 
   return (
     <StyledWrapper className="ws-messages-list flex flex-col">
       <Virtuoso
-        ref={virtuosoRef}
         scrollerRef={setScrollerElement}
-        data={messages}
+        data={safeMessages}
         itemContent={renderItem}
         computeItemKey={computeItemKey}
         followOutput={followOutput}
-        initialTopMostItemIndex={messages.length - 1}
+        initialTopMostItemIndex={safeMessages.length - 1}
         atBottomStateChange={handleAtBottomStateChange}
+        defaultItemHeight={40}
+        increaseViewportBy={{ top: 400, bottom: 400 }}
       />
     </StyledWrapper>
   );

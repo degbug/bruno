@@ -1339,12 +1339,15 @@ const registerNetworkIpc = (mainWindow) => {
       const stream = response.stream;
       response.stream = { running: response.status >= 200 && response.status < 300 };
 
-      stream.on('data', (newData) => {
-        // Collect the raw chunk so runRequest can rebuild the full body on stream close.
-        response.sseChunks?.push(newData);
+      let sseBuffer = '';
+
+      const sendSSEMessage = (rawText) => {
+        if (!rawText.trim()) return;
+        const buf = Buffer.from(rawText, 'utf-8');
+        response.sseChunks?.push(buf);
         seq += 1;
 
-        const parsed = parseDataFromResponse({ data: newData, headers: {} });
+        const parsed = parseDataFromResponse({ data: buf, headers: {} });
 
         mainWindow.webContents.send('main:http-stream-new-data', {
           collectionUid,
@@ -1353,9 +1356,24 @@ const registerNetworkIpc = (mainWindow) => {
           timestamp: Date.now(),
           data: parsed
         });
+      };
+
+      stream.on('data', (newData) => {
+        sseBuffer += newData.toString('utf-8');
+
+        const parts = sseBuffer.split('\n\n');
+        sseBuffer = parts.pop();
+
+        for (const part of parts) {
+          sendSSEMessage(part + '\n\n');
+        }
       });
 
       stream.on('close', () => {
+        if (sseBuffer.trim()) {
+          sendSSEMessage(sseBuffer);
+        }
+
         if (!cancelTokens[response.cancelTokenUid]) return;
 
         mainWindow.webContents.send('main:http-stream-end', {
